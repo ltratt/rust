@@ -52,7 +52,7 @@
 
 use clone::Clone;
 use io::standard_error;
-use io::{FilePermission, Write, Open, FileAccess, FileMode, FileType};
+use io::{FilePermission, Write, Open, OpenExclusive, FileAccess, FileMode, FileType};
 use io::{IoResult, IoError, InvalidInput};
 use io::{FileStat, SeekStyle, Seek, Writer, Reader};
 use io::{Read, Truncate, ReadWrite, Append};
@@ -805,6 +805,7 @@ impl PathExtensions for path::Path {
 fn mode_string(mode: FileMode) -> &'static str {
     match mode {
         super::Open => "open",
+        super::OpenExclusive => "openexclusive",
         super::Append => "append",
         super::Truncate => "truncate"
     }
@@ -1030,6 +1031,19 @@ mod test {
             assert_eq!(str::from_utf8(&read_mem).unwrap(), chunk_one);
         }
         check!(unlink(filename));
+    }
+
+    #[test]
+    fn file_test_open_exclusive() {
+        let tmpdir = tmpdir();
+        let p = &tmpdir.join("p");
+        File::create(p).unwrap().close();
+        File::create(p).unwrap().close();
+        let result = File::open_mode(p, OpenExclusive, ReadWrite);
+        error!(result, "file already exists");
+        let p2 = &tmpdir.join("p2");
+        let mut result2 = check!(File::open_mode(p2, OpenExclusive, ReadWrite));
+        result2.write("test".as_bytes()).unwrap();
     }
 
     #[test]

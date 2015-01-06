@@ -25,7 +25,7 @@ use sys;
 use sys::os;
 use sys_common::{keep_going, eof, mkerr_libc};
 
-use io::{FilePermission, Write, UnstableFileStat, Open, FileAccess, FileMode};
+use io::{FilePermission, Write, UnstableFileStat, Open, OpenExclusive, FileAccess, FileMode};
 use io::{IoResult, IoError, FileStat, SeekStyle};
 use io::{Read, Truncate, SeekCur, SeekSet, ReadWrite, SeekEnd, Append};
 
@@ -171,6 +171,7 @@ pub fn open(path: &Path, fm: FileMode, fa: FileAccess) -> IoResult<FileDesc> {
     // Flags passed to open_osfhandle
     let flags = match fm {
         Open => 0,
+        OpenExclusive => 0,
         Append => libc::O_APPEND,
         Truncate => libc::O_TRUNC,
     };
@@ -196,6 +197,8 @@ pub fn open(path: &Path, fm: FileMode, fa: FileAccess) -> IoResult<FileDesc> {
         (Truncate, _) => libc::CREATE_ALWAYS,
         (Open, Read) => libc::OPEN_EXISTING,
         (Open, _) => libc::OPEN_ALWAYS,
+        (OpenExclusive, Read) => panic!("Can't OpenExclusive a read-only file"),
+        (OpenExclusive, _) => libc::CREATE_NEW,
         (Append, Read) => {
             dwDesiredAccess |= libc::FILE_APPEND_DATA;
             libc::OPEN_EXISTING

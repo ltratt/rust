@@ -13,7 +13,7 @@
 use prelude::v1::*;
 
 use ffi::{self, CString};
-use io::{FilePermission, Write, UnstableFileStat, Open, FileAccess, FileMode};
+use io::{FilePermission, Write, UnstableFileStat, Open, OpenExclusive, FileAccess, FileMode};
 use io::{IoResult, FileStat, SeekStyle};
 use io::{Read, Truncate, SeekCur, SeekSet, ReadWrite, SeekEnd, Append};
 use io;
@@ -155,8 +155,13 @@ fn cstr(path: &Path) -> CString {
 }
 
 pub fn open(path: &Path, fm: FileMode, fa: FileAccess) -> IoResult<FileDesc> {
+    if fm == OpenExclusive && fa == Read {
+        panic!("Can't OpenExclusive a read-only file");
+    }
+
     let flags = match fm {
         Open => 0,
+        OpenExclusive => libc::O_EXCL,
         Append => libc::O_APPEND,
         Truncate => libc::O_TRUNC,
     };

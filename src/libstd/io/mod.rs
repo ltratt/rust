@@ -1660,6 +1660,10 @@ pub fn standard_error(kind: IoErrorKind) -> IoError {
 pub enum FileMode {
     /// Opens a file positioned at the beginning.
     Open,
+    /// Opens a new file positioned at the beginning; if a file with the path
+    /// already exists, this will result in an error. Note that OpenExclusive
+    /// files must have Write or ReadWrite access permissions.
+    OpenExclusive,
     /// Opens a file positioned at EOF.
     Append,
     /// Opens a file, truncating it if it already exists.
