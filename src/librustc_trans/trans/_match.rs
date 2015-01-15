@@ -471,7 +471,7 @@ fn enter_default<'a, 'p, 'blk, 'tcx>(bcx: Block<'blk, 'tcx>,
     // Collect all of the matches that can match against anything.
     enter_match(bcx, dm, m, col, val, |pats| {
         if pat_is_binding_or_wild(dm, &*pats[col]) {
-            let mut r = pats[0..col].to_vec();
+            let mut r = pats[..col].to_vec();
             r.push_all(&pats[(col + 1)..]);
             Some(r)
         } else {
@@ -1235,7 +1235,7 @@ pub fn trans_match<'blk, 'tcx>(bcx: Block<'blk, 'tcx>,
 /// Checks whether the binding in `discr` is assigned to anywhere in the expression `body`
 fn is_discr_reassigned(bcx: Block, discr: &ast::Expr, body: &ast::Expr) -> bool {
     let (vid, field) = match discr.node {
-        ast::ExprPath(..) => match bcx.def(discr.id) {
+        ast::ExprPath(_) | ast::ExprQPath(_) => match bcx.def(discr.id) {
             def::DefLocal(vid) | def::DefUpvar(vid, _, _) => (vid, None),
             _ => return false
         },

@@ -986,7 +986,7 @@ pub fn create_captured_var_metadata<'blk, 'tcx>(bcx: Block<'blk, 'tcx>,
 
     let variable_access = IndirectVariable {
         alloca: env_pointer,
-        address_operations: &address_operations[0..address_op_count]
+        address_operations: &address_operations[..address_op_count]
     };
 
     declare_local(bcx,
@@ -3526,7 +3526,8 @@ fn create_scope_map(cx: &CrateContext,
             ast::ExprLit(_)   |
             ast::ExprBreak(_) |
             ast::ExprAgain(_) |
-            ast::ExprPath(_)  => {}
+            ast::ExprPath(_)  |
+            ast::ExprQPath(_) => {}
 
             ast::ExprCast(ref sub_exp, _)     |
             ast::ExprAddrOf(_, ref sub_exp)  |
