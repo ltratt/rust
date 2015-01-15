@@ -52,12 +52,12 @@ struct Config {
 }
 
 fn parse_opts(argv: Vec<String> ) -> Config {
-    let opts = vec!(getopts::optflag("", "stress", ""));
-
     let argv = argv.iter().map(|x| x.to_string()).collect::<Vec<_>>();
     let opt_args = argv.slice(1, argv.len());
 
-    match getopts::getopts(opt_args, opts.as_slice()) {
+    match getopts::Options::new()
+                           .add_optflag("", "stress", "")
+                           .parse_freely(opt_args) {
       Ok(ref m) => {
           return Config {stress: m.opt_present("stress")}
       }

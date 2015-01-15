@@ -52,7 +52,7 @@ use self::NamePadding::*;
 use self::OutputLocation::*;
 
 use stats::Stats;
-use getopts::{OptGroup, optflag, optopt};
+use getopts::Options;
 use regex::Regex;
 use serialize::{json, Decodable, Encodable};
 use term::Terminal;
@@ -334,33 +334,35 @@ impl TestOpts {
 /// Result of parsing the options.
 pub type OptRes = Result<TestOpts, String>;
 
-fn optgroups() -> Vec<getopts::OptGroup> {
-    vec!(getopts::optflag("", "ignored", "Run ignored tests"),
-      getopts::optflag("", "test", "Run tests and not benchmarks"),
-      getopts::optflag("", "bench", "Run benchmarks instead of tests"),
-      getopts::optflag("h", "help", "Display this message (longer with --help)"),
-      getopts::optopt("", "save-metrics", "Location to save bench metrics",
-                     "PATH"),
-      getopts::optopt("", "ratchet-metrics",
+fn optgroups() -> getopts::Options {
+    let mut opts = getopts::Options::new();
+    opts.add_optflag("", "ignored", "Run ignored tests");
+    opts.add_optflag("", "test", "Run tests and not benchmarks");
+    opts.add_optflag("", "bench", "Run benchmarks instead of tests");
+    opts.add_optflag("h", "help", "Display this message (longer with --help)");
+    opts.add_optopt("", "save-metrics", "Location to save bench metrics",
+                     "PATH");
+    opts.add_optopt("", "ratchet-metrics",
                      "Location to load and save metrics from. The metrics \
                       loaded are cause benchmarks to fail if they run too \
-                      slowly", "PATH"),
-      getopts::optopt("", "ratchet-noise-percent",
+                      slowly", "PATH");
+    opts.add_optopt("", "ratchet-noise-percent",
                      "Tests within N% of the recorded metrics will be \
-                      considered as passing", "PERCENTAGE"),
-      getopts::optopt("", "logfile", "Write logs to the specified file instead \
-                          of stdout", "PATH"),
-      getopts::optopt("", "test-shard", "run shard A, of B shards, worth of the testsuite",
-                     "A.B"),
-      getopts::optflag("", "nocapture", "don't capture stdout/stderr of each \
-                                         task, allow printing directly"),
-      getopts::optopt("", "color", "Configure coloring of output:
+                      considered as passing", "PERCENTAGE");
+    opts.add_optopt("", "logfile", "Write logs to the specified file instead \
+                          of stdout", "PATH");
+    opts.add_optopt("", "test-shard", "run shard A, of B shards, worth of the testsuite",
+                     "A.B");
+    opts.add_optflag("", "nocapture", "don't capture stdout/stderr of each \
+                                         task, allow printing directly");
+    opts.add_optopt("", "color", "Configure coloring of output:
             auto   = colorize if stdout is a tty and tests are run on serially (default);
             always = always colorize output;
-            never  = never colorize output;", "auto|always|never"),
-      getopts::optflag("", "boxplot", "Display a boxplot of the benchmark statistics"),
-      getopts::optopt("", "boxplot-width", "Set the boxplot width (default 50)", "WIDTH"),
-      getopts::optflag("", "stats", "Display the benchmark min, max, and quartiles"))
+            never  = never colorize output;", "auto|always|never");
+    opts.add_optflag("", "boxplot", "Display a boxplot of the benchmark statistics");
+    opts.add_optopt("", "boxplot-width", "Set the boxplot width (default 50)", "WIDTH");
+    opts.add_optflag("", "stats", "Display the benchmark min, max, and quartiles");
+    opts
 }
 
 fn usage(binary: &str) {
@@ -391,15 +393,14 @@ Test Attributes:
                      test, then the test runner will ignore these tests during
                      normal test runs. Running with --ignored will run these
                      tests."#,
-             usage = getopts::usage(message.as_slice(),
-                                    optgroups().as_slice()));
+             usage = optgroups().usage(message.as_slice()));
 }
 
 // Parses command line arguments into test options
 pub fn parse_opts(args: &[String]) -> Option<OptRes> {
     let args_ = args.tail();
     let matches =
-        match getopts::getopts(args_.as_slice(), optgroups().as_slice()) {
+        match optgroups().parse_freely(args_.as_slice()) {
           Ok(m) => m,
           Err(f) => return Some(Err(f.to_string()))
         };

@@ -113,61 +113,59 @@ pub fn main() {
     std::os::set_exit_status(res.map_err(|_| ()).unwrap());
 }
 
-pub fn opts() -> Vec<getopts::OptGroup> {
-    use getopts::*;
-    vec!(
-        optflag("h", "help", "show this help message"),
-        optflag("V", "version", "print rustdoc's version"),
-        optflag("v", "verbose", "use verbose output"),
-        optopt("r", "input-format", "the input type of the specified file",
-               "[rust|json]"),
-        optopt("w", "output-format", "the output type to write",
-               "[html|json]"),
-        optopt("o", "output", "where to place the output", "PATH"),
-        optopt("", "crate-name", "specify the name of this crate", "NAME"),
-        optmulti("L", "library-path", "directory to add to crate search path",
-                 "DIR"),
-        optmulti("", "cfg", "pass a --cfg to rustc", ""),
-        optmulti("", "extern", "pass an --extern to rustc", "NAME=PATH"),
-        optmulti("", "plugin-path", "directory to load plugins from", "DIR"),
-        optmulti("", "passes", "space separated list of passes to also run, a \
+pub fn opts() -> getopts::Options {
+    let mut opts = getopts::Options::new();
+    opts.add_optflag("h", "help", "show this help message");
+    opts.add_optflag("V", "version", "print rustdoc's version");
+    opts.add_optflag("v", "verbose", "use verbose output");
+    opts.add_optopt("r", "input-format", "the input type of the specified file",
+               "[rust|json]");
+    opts.add_optopt("w", "output-format", "the output type to write",
+               "[html|json]");
+    opts.add_optopt("o", "output", "where to place the output", "PATH");
+    opts.add_optopt("", "crate-name", "specify the name of this crate", "NAME");
+    opts.add_optmulti("L", "library-path", "directory to add to crate search path",
+                 "DIR");
+    opts.add_optmulti("", "cfg", "pass a --cfg to rustc", "");
+    opts.add_optmulti("", "extern", "pass an --extern to rustc", "NAME=PATH");
+    opts.add_optmulti("", "plugin-path", "directory to load plugins from", "DIR");
+    opts.add_optmulti("", "passes", "space separated list of passes to also run, a \
                                 value of `list` will print available passes",
-                 "PASSES"),
-        optmulti("", "plugins", "space separated list of plugins to also load",
-                 "PLUGINS"),
-        optflag("", "no-defaults", "don't run the default passes"),
-        optflag("", "test", "run code examples as tests"),
-        optmulti("", "test-args", "arguments to pass to the test runner",
-                 "ARGS"),
-        optopt("", "target", "target triple to document", "TRIPLE"),
-        optmulti("", "markdown-css", "CSS files to include via <link> in a rendered Markdown file",
-                 "FILES"),
-        optmulti("", "html-in-header",
+                 "PASSES");
+    opts.add_optmulti("", "plugins", "space separated list of plugins to also load",
+                 "PLUGINS");
+    opts.add_optflag("", "no-defaults", "don't run the default passes");
+    opts.add_optflag("", "test", "run code examples as tests");
+    opts.add_optmulti("", "test-args", "arguments to pass to the test runner",
+                 "ARGS");
+    opts.add_optopt("", "target", "target triple to document", "TRIPLE");
+    opts.add_optmulti("", "markdown-css", "CSS files to include via <link> in a rendered Markdown file",
+                 "FILES");
+    opts.add_optmulti("", "html-in-header",
                  "files to include inline in the <head> section of a rendered Markdown file \
                  or generated documentation",
-                 "FILES"),
-        optmulti("", "html-before-content",
+                 "FILES");
+    opts.add_optmulti("", "html-before-content",
                  "files to include inline between <body> and the content of a rendered \
                  Markdown file or generated documentation",
-                 "FILES"),
-        optmulti("", "html-after-content",
+                 "FILES");
+    opts.add_optmulti("", "html-after-content",
                  "files to include inline between the content and </body> of a rendered \
                  Markdown file or generated documentation",
-                 "FILES"),
-        optopt("", "markdown-playground-url",
-               "URL to send code snippets to", "URL"),
-        optflag("", "markdown-no-toc", "don't include table of contents")
-    )
+                 "FILES");
+    opts.add_optopt("", "markdown-playground-url",
+               "URL to send code snippets to", "URL");
+    opts.add_optflag("", "markdown-no-toc", "don't include table of contents");
+    opts
 }
 
 pub fn usage(argv0: &str) {
     println!("{}",
-             getopts::usage(format!("{} [options] <input>", argv0).as_slice(),
-                            opts().as_slice()));
+             opts().usage(format!("{} [options] <input>", argv0).as_slice()));
 }
 
 pub fn main_args(args: &[String]) -> int {
-    let matches = match getopts::getopts(args.tail(), opts().as_slice()) {
+    let matches = match opts().parse_freely(args.tail()) {
         Ok(m) => m,
         Err(err) => {
             println!("{}", err);

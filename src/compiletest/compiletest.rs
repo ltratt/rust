@@ -28,7 +28,7 @@ use std::io;
 use std::io::fs;
 use std::str::FromStr;
 use std::thunk::Thunk;
-use getopts::{optopt, optflag, reqopt};
+use getopts::Options;
 use common::Config;
 use common::{Pretty, DebugInfoGdb, DebugInfoLldb, Codegen};
 use util::logv;
@@ -54,63 +54,62 @@ pub fn main() {
 }
 
 pub fn parse_config(args: Vec<String> ) -> Config {
-
-    let groups : Vec<getopts::OptGroup> =
-        vec!(reqopt("", "compile-lib-path", "path to host shared libraries", "PATH"),
-          reqopt("", "run-lib-path", "path to target shared libraries", "PATH"),
-          reqopt("", "rustc-path", "path to rustc to use for compiling", "PATH"),
-          optopt("", "clang-path", "path to  executable for codegen tests", "PATH"),
-          optopt("", "valgrind-path", "path to Valgrind executable for Valgrind tests", "PROGRAM"),
-          optflag("", "force-valgrind", "fail if Valgrind tests cannot be run under Valgrind"),
-          optopt("", "llvm-bin-path", "path to directory holding llvm binaries", "DIR"),
-          reqopt("", "src-base", "directory to scan for test files", "PATH"),
-          reqopt("", "build-base", "directory to deposit test outputs", "PATH"),
-          reqopt("", "aux-base", "directory to find auxiliary test files", "PATH"),
-          reqopt("", "stage-id", "the target-stage identifier", "stageN-TARGET"),
-          reqopt("", "mode", "which sort of compile tests to run",
-                 "(compile-fail|run-fail|run-pass|run-pass-valgrind|pretty|debug-info)"),
-          optflag("", "ignored", "run tests marked as ignored"),
-          optopt("", "runtool", "supervisor program to run tests under \
-                                 (eg. emulator, valgrind)", "PROGRAM"),
-          optopt("", "host-rustcflags", "flags to pass to rustc for host", "FLAGS"),
-          optopt("", "target-rustcflags", "flags to pass to rustc for target", "FLAGS"),
-          optflag("", "verbose", "run tests verbosely, showing all output"),
-          optopt("", "logfile", "file to log test execution to", "FILE"),
-          optopt("", "save-metrics", "file to save metrics to", "FILE"),
-          optopt("", "ratchet-metrics", "file to ratchet metrics against", "FILE"),
-          optopt("", "ratchet-noise-percent",
-                 "percent change in metrics to consider noise", "N"),
-          optflag("", "jit", "run tests under the JIT"),
-          optopt("", "target", "the target to build for", "TARGET"),
-          optopt("", "host", "the host to build for", "HOST"),
-          optopt("", "gdb-version", "the version of GDB used", "VERSION STRING"),
-          optopt("", "lldb-version", "the version of LLDB used", "VERSION STRING"),
-          optopt("", "android-cross-path", "Android NDK standalone path", "PATH"),
-          optopt("", "adb-path", "path to the android debugger", "PATH"),
-          optopt("", "adb-test-dir", "path to tests for the android debugger", "PATH"),
-          optopt("", "lldb-python-dir", "directory containing LLDB's python module", "PATH"),
-          optopt("", "test-shard", "run shard A, of B shards, worth of the testsuite", "A.B"),
-          optflag("h", "help", "show this message"));
+    let mut opts = Options::new();
+    opts.add_reqopt("", "compile-lib-path", "path to host shared libraries", "PATH");
+    opts.add_reqopt("", "run-lib-path", "path to target shared libraries", "PATH");
+    opts.add_reqopt("", "rustc-path", "path to rustc to use for compiling", "PATH");
+    opts.add_optopt("", "clang-path", "path to  executable for codegen tests", "PATH");
+    opts.add_optopt("", "valgrind-path", "path to Valgrind executable for Valgrind tests", "PROGRAM");
+    opts.add_optflag("", "force-valgrind", "fail if Valgrind tests cannot be run under Valgrind");
+    opts.add_optopt("", "llvm-bin-path", "path to directory holding llvm binaries", "DIR");
+    opts.add_reqopt("", "src-base", "directory to scan for test files", "PATH");
+    opts.add_reqopt("", "build-base", "directory to deposit test outputs", "PATH");
+    opts.add_reqopt("", "aux-base", "directory to find auxiliary test files", "PATH");
+    opts.add_reqopt("", "stage-id", "the target-stage identifier", "stageN-TARGET");
+    opts.add_reqopt("", "mode", "which sort of compile tests to run",
+                 "(compile-fail|run-fail|run-pass|run-pass-valgrind|pretty|debug-info)");
+    opts.add_optflag("", "ignored", "run tests marked as ignored");
+    opts.add_optopt("", "runtool", "supervisor program to run tests under \
+                                 (eg. emulator, valgrind)", "PROGRAM");
+    opts.add_optopt("", "host-rustcflags", "flags to pass to rustc for host", "FLAGS");
+    opts.add_optopt("", "target-rustcflags", "flags to pass to rustc for target", "FLAGS");
+    opts.add_optflag("", "verbose", "run tests verbosely, showing all output");
+    opts.add_optopt("", "logfile", "file to log test execution to", "FILE");
+    opts.add_optopt("", "save-metrics", "file to save metrics to", "FILE");
+    opts.add_optopt("", "ratchet-metrics", "file to ratchet metrics against", "FILE");
+    opts.add_optopt("", "ratchet-noise-percent",
+                 "percent change in metrics to consider noise", "N");
+    opts.add_optflag("", "jit", "run tests under the JIT");
+    opts.add_optopt("", "target", "the target to build for", "TARGET");
+    opts.add_optopt("", "host", "the host to build for", "HOST");
+    opts.add_optopt("", "gdb-version", "the version of GDB used", "VERSION STRING");
+    opts.add_optopt("", "lldb-version", "the version of LLDB used", "VERSION STRING");
+    opts.add_optopt("", "android-cross-path", "Android NDK standalone path", "PATH");
+    opts.add_optopt("", "adb-path", "path to the android debugger", "PATH");
+    opts.add_optopt("", "adb-test-dir", "path to tests for the android debugger", "PATH");
+    opts.add_optopt("", "lldb-python-dir", "directory containing LLDB's python module", "PATH");
+    opts.add_optopt("", "test-shard", "run shard A, of B shards, worth of the testsuite", "A.B");
+    opts.add_optflag("h", "help", "show this message");
 
     assert!(!args.is_empty());
     let argv0 = args[0].clone();
     let args_ = args.tail();
     if args[1].as_slice() == "-h" || args[1].as_slice() == "--help" {
         let message = format!("Usage: {} [OPTIONS] [TESTNAME...]", argv0);
-        println!("{}", getopts::usage(message.as_slice(), groups.as_slice()));
+        println!("{}", opts.usage(message.as_slice()));
         println!("");
         panic!()
     }
 
     let matches =
-        &match getopts::getopts(args_.as_slice(), groups.as_slice()) {
+        &match opts.parse_freely(args_.as_slice()) {
           Ok(m) => m,
           Err(f) => panic!("{:?}", f)
         };
 
     if matches.opt_present("h") || matches.opt_present("help") {
         let message = format!("Usage: {} [OPTIONS]  [TESTNAME...]", argv0);
-        println!("{}", getopts::usage(message.as_slice(), groups.as_slice()));
+        println!("{}", opts.usage(message.as_slice()));
         println!("");
         panic!()
     }

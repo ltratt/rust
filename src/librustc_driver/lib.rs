@@ -279,15 +279,11 @@ pub fn version(binary: &str, matches: &getopts::Matches) {
 }
 
 fn usage(verbose: bool, include_unstable_options: bool) {
-    let groups = if verbose {
-        config::rustc_optgroups()
+    let opts = if verbose {
+        config::rustc_optgroups(include_unstable_options)
     } else {
-        config::rustc_short_optgroups()
+        config::rustc_short_optgroups(include_unstable_options)
     };
-    let groups : Vec<_> = groups.into_iter()
-        .filter(|x| include_unstable_options || x.is_stable())
-        .map(|x|x.opt_group)
-        .collect();
     let message = format!("Usage: rustc [OPTIONS] INPUT");
     let extra_help = if verbose {
         ""
@@ -299,7 +295,7 @@ Additional help:
     -C help             Print codegen options
     -W help             Print 'lint' options and default settings
     -Z help             Print internal options for debugging rustc{}\n",
-              getopts::usage(message.as_slice(), groups.as_slice()),
+              opts.usage(message.as_slice()),
               extra_help);
 }
 
@@ -459,15 +455,13 @@ pub fn handle_options(mut args: Vec<String>) -> Option<getopts::Matches> {
     }
 
     let matches =
-        match getopts::getopts(&args[], &config::optgroups()[]) {
+        match config::rustc_optgroups(false).parse_freely(args.as_slice()) {
             Ok(m) => m,
             Err(f_stable_attempt) => {
                 // redo option parsing, including unstable options this time,
                 // in anticipation that the mishandled option was one of the
                 // unstable ones.
-                let all_groups : Vec<getopts::OptGroup>
-                    = config::rustc_optgroups().into_iter().map(|x|x.opt_group).collect();
-                match getopts::getopts(args.as_slice(), all_groups.as_slice()) {
+                match config::rustc_optgroups(true).parse_freely(args.as_slice()) {
                     Ok(m_unstable) => {
                         let r = m_unstable.opt_strs("Z");
                         let include_unstable_options = r.iter().any(|x| *x == "unstable-options");

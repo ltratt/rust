@@ -10,13 +10,14 @@
 
 extern crate getopts;
 
-use getopts::{optopt, getopts};
+use getopts::Options;
 
 pub fn main() {
     let args = Vec::new();
-    let opts = vec!(optopt("b", "", "something", "SMTHNG"));
+    let mut opts = Options::new();
+    opts.add_optopt("b", "", "something", "SMTHNG");
 
-    match getopts(args.as_slice(), opts.as_slice()) {
+    match opts.parse_freely(args.as_slice()) {
         Ok(ref m)  =>
             assert!(!m.opt_present("b")),
         Err(ref f) => panic!("{}", *f)
